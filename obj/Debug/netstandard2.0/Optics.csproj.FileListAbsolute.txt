@@ -1,0 +1,8 @@
+D:\Прога\4 сем\Optics\bin\Debug\netstandard2.0\Optics.deps.json
+D:\Прога\4 сем\Optics\bin\Debug\netstandard2.0\Optics.dll
+D:\Прога\4 сем\Optics\obj\Debug\netstandard2.0\Optics.csprojAssemblyReference.cache
+D:\Прога\4 сем\Optics\obj\Debug\netstandard2.0\Optics.AssemblyInfoInputs.cache
+D:\Прога\4 сем\Optics\obj\Debug\netstandard2.0\Optics.AssemblyInfo.cs
+D:\Прога\4 сем\Optics\bin\Debug\netstandard2.0\Optics.pdb
+D:\Прога\4 сем\Optics\obj\Debug\netstandard2.0\Optics.dll
+D:\Прога\4 сем\Optics\obj\Debug\netstandard2.0\Optics.pdb
