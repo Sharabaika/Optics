@@ -86,7 +86,7 @@ namespace Optics
             float d2 = Vector2.Dot(v2, localRay.Direction);
 
 
-            if (d1 < d2 && d1 > 0)
+            if (Math.Abs(d1) < Math.Abs(d2) && d1 > 0)
             {
                 if (yFrom <= y1 && y1 <= yTo)
                     return new RayHit<Tray>(ray, p1);
@@ -106,8 +106,8 @@ namespace Optics
             if (y == 0)
                 return new Vector2(-p, 0);
             var yPrime = p / y;
-            Vector2 tangent = new Vector2((float)Math.Cos(yPrime), (float)Math.Sin(yPrime));
-            Vector2 normal = -Vector2.Transform(tangent, Matrix3x2.CreateRotation((float)Math.PI));
+            Vector2 tangent =Vector2.Normalize(new Vector2(1, yPrime));
+            Vector2 normal = Vector2.Transform(tangent, Matrix3x2.CreateRotation((float)Math.PI/2f));
             return normal;            
         }
 

@@ -10,6 +10,8 @@ namespace Optics
         private ILine leftSurface;
         private ILine rightSurface;
 
+        private float focalLength;
+        private float width;
         /// <summary>
         /// 
         /// </summary>
@@ -22,33 +24,63 @@ namespace Optics
         {
             leftSurface = new HorizontalParabola(center - Vector2.UnitX * d, p, -height, height) as ILine;
             rightSurface = new HorizontalParabola(center + Vector2.UnitX * d, -p, -height, height) as ILine;
+            focalLength = p;
+            width = d;
         }
 
+        private (RayHit<Ray> hit, Ray refraction, Ray Reflection) HandleSide(Ray ray, ILine side, bool isInner)
+        {
+            var hit = side.Intersection(ray);
+            if (hit)
+            {
+                Vector2 normal;
+                var n = refractiveIndex(hit.Y);
 
+                if (isInner)
+                {
+                    normal = -side.Normal(hit.Y);
+                    n = 1f / n;
+                }
+                else
+                {
+                    normal = side.Normal(hit.Y);
+                }
+
+                var incidenceAngle = (float)(Math.Atan2(-normal.Y,-normal.X) - Math.Atan2(ray.Direction.Y, ray.Direction.X));
+                var refractionAngle = (float)Math.Asin(Math.Sin(incidenceAngle) / n);
+
+                var refraction = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(refractionAngle)));
+                var reflection = new Ray(hit.Point, Vector2.Reflect(ray.Direction, normal));
+                return (hit, refraction, reflection);
+            }
+
+            return (hit, ray, ray);
+        }
 
         public override Ray HandleRay(Ray ray)
         {
+            ILine side, otherSide;
+            bool isInner = (ray.Origin.Y * ray.Origin.Y <= 2 * focalLength * (ray.Origin.X + width)) &&
+                (ray.Origin.Y * ray.Origin.Y <= 2 * focalLength * (ray.Origin.X - width));
 
-            var hit = leftSurface.Intersection<Ray>(ray);
+            if ((ray.Direction.X > 0f && !isInner) || (ray.Direction.X < 0 && isInner))
+            {
+                side = leftSurface;
+                otherSide = rightSurface;
+            }
+            else
+            {
+                side = rightSurface;
+                otherSide = leftSurface;
+            }
+            var (hit, innerRefraction, mainReflection) = HandleSide(ray, side, isInner);
+
             if (hit)
             {
-                var normal = leftSurface.Normal(hit.Point.Y);
-                var reflection = new Ray(hit.Point, Vector2.Reflect(ray.Direction,normal));
-                // znau chto ne tak on otrazaetsya no kakayz seichas raznitsa
-                var incidenceAngle = (float)Math.Atan2(normal.X - hit.ray.Direction.X, normal.Y - hit.ray.Direction.Y)+Math.PI/2f;
-                var s = Math.Sin(incidenceAngle);
-                // sini = n*sinr  sinr = (sin i) / n
-                var refractionAngle = (float)Math.Asin(Math.Sin(incidenceAngle) / refractiveIndex(hit.Y));
-
-                var innerRay = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(refractionAngle)));
-
-
-                // TODO second lens
-
-
-                return innerRay;
+                var (hit2, mainRefraction, innerReflection) = HandleSide(innerRefraction, otherSide,true);
+                return mainRefraction;
             }
-            return new Ray(Vector2.Zero, Vector2.UnitX);
+            return innerRefraction;
         }
     }
 }
