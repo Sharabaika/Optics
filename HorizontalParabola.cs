@@ -107,7 +107,7 @@ namespace Optics
                 return new Vector2(-p, 0);
             var yPrime = p / y;
             Vector2 tangent =Vector2.Normalize(new Vector2(1, yPrime));
-            Vector2 normal = Vector2.Transform(tangent, Matrix3x2.CreateRotation((float)Math.PI/2f));
+            Vector2 normal = Vector2.Transform(tangent, Matrix3x2.CreateRotation((float)Math.PI/2f*Math.Sign(y)));
             return normal;            
         }
 

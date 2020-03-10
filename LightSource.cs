@@ -9,10 +9,9 @@ namespace Optics
     {
         public Vector2 Position { get; private set;}
 
-        public float RayRange = 100f;
+        public float RayRange { get; set; }
 
-
-        public LightSource(Vector2 position, List<Vector2> beamsDirections, float rayRange)
+        public LightSource(Vector2 position, float rayRange)
         {
             Position = position;
             RayRange = rayRange;
