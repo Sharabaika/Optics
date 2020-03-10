@@ -33,7 +33,7 @@ namespace Optics
             Height= height;
         }
 
-        private (RayHit<Ray> hit, Ray refraction, Ray Reflection) HandleSide(Ray ray, ILine side, bool isInner)
+        private (RayHit<Ray> hit, Ray refraction, Ray Reflection,bool fullReflection) HandleSide(Ray ray, ILine side, bool isInner)
         {
             var hit = side.Intersection(ray);
             if (hit)
@@ -56,19 +56,20 @@ namespace Optics
 
                 var reflection = new Ray(hit.Point, Vector2.Reflect(ray.Direction, normal));
 
+                bool isFullReflection = false;
                 if (float.IsNaN(refractionAngle))
                 {
-                    // Full reflection
-                    throw new FullReflectionException<Ray>(reflection);
+                    isFullReflection = true;
                 }
 
                 var refraction = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(-refractionAngle)));
-                return (hit, refraction, reflection);
+                return (hit, refraction, reflection, isFullReflection);
             }
 
-            return (hit, ray, ray);
+            return (hit, ray, ray,false);
         }
 
+        // Dont use
         public override Ray HandleRay(Ray ray,List<RayHit<Ray>> hits, List<Ray> secondaryRays)
         {
             ILine side, otherSide;
@@ -85,12 +86,12 @@ namespace Optics
                 side = rightSurface;
                 otherSide = leftSurface;
             }
-            var (hit, innerRefraction, mainReflection) = HandleSide(ray, side, isInner);
+            var (hit, innerRefraction, mainReflection,fullRef) = HandleSide(ray, side, isInner);
             hits.Add(hit);
             secondaryRays.Add(mainReflection);
             if (hit)
             {
-                var (hit2, mainRefraction, innerReflection) = HandleSide(innerRefraction, otherSide,true);                
+                var (hit2, mainRefraction, innerReflection,fullRef1) = HandleSide(innerRefraction, otherSide,true);                
                 hits.Add(hit2);
 
                 // Processing inner reflections
@@ -104,7 +105,7 @@ namespace Optics
                 Ray newRay = innerReflection;
                 for (int i = 0; i < 3; i++)
                 {
-                    var (newHit, secondaryRefraction, secondaryReflection) = HandleSide(newRay, side, true);
+                    var (newHit, secondaryRefraction, secondaryReflection,fullRef2) = HandleSide(newRay, side, true);
                     if (newHit)
                     {
                         hits.Add(newHit);
@@ -113,7 +114,7 @@ namespace Optics
                     else
                     {
                         Swap(ref side, ref otherSide);
-                        (newHit, secondaryRefraction, secondaryReflection) = HandleSide(newRay, side, true);
+                        (newHit, secondaryRefraction, secondaryReflection,fullRef2) = HandleSide(newRay, side, true);
                         if (newHit)
                         {
                             hits.Add(newHit);
@@ -129,11 +130,66 @@ namespace Optics
             return innerRefraction;
         }
 
-        public void HandleRayV2(Ray ray, List<RayHit<Ray>> hits, List<Ray> secondaryRays)
+        public void HandleRayV2(Ray rayToHandle, List<RayHit<Ray>> hits, List<Ray> secondaryRays)
         {
-            Stack<Ray> raysToHandle = new Stack<Ray>();
-            ILine side = toLeft(ray.Origin) ? leftSurface : rightSurface;
 
+
+            Stack<Ray> raysToHandle = new Stack<Ray>();
+            ILine side = toLeft(rayToHandle.Origin) ? leftSurface : rightSurface;
+            ILine otherSide = toRight(rayToHandle.Origin) ? leftSurface : rightSurface;
+
+            var (hit, innerRefraction, mainReflection, fullRef) = HandleSide(rayToHandle, side, true);
+            if (hit)
+            {
+                if (fullRef)
+                {
+                    hits.Add(hit);
+                    secondaryRays.Add(mainReflection);
+                    return;
+                }
+                raysToHandle.Push(innerRefraction);
+
+                // all are inside
+                for (int i = 0; i < 3; i++)
+                {                      
+                    var ray = raysToHandle.Pop();
+                    var (newHit, newRefraction, newReflection, fullref) = HandleSide(ray, otherSide,true);
+                    var (newHit2, newRefraction2, newReflection2, fullref2) = HandleSide(ray, otherSide, true);
+
+                    if(newHit && newHit2)
+                    {
+                        // TODO
+                    }
+
+                    if (newHit)
+                    {
+                        raysToHandle.Push(newReflection);
+                        hits.Add(hit);
+
+                        if (fullref)
+                        {
+                        }
+                        else
+                        {
+                            secondaryRays.Add(newRefraction);
+                        }
+                    }
+                    else
+                    {
+                        flipSides();
+                        raysToHandle.Push(ray);
+                    }
+                }
+
+
+            }
+
+            void flipSides()
+            {
+                var tmp = side;
+                side = otherSide;
+                otherSide = tmp;
+            }
         }
 
 
@@ -154,14 +210,5 @@ namespace Optics
             return p.X > Center.X;
         }
 
-        public class FullReflectionException<Tray> : System.Exception where Tray: Ray
-        {
-            Tray reflection;
-
-            public FullReflectionException(RayHit<Tray> hit)
-            {
-                this.reflection = reflection;
-            }
-        }
     }
 }
