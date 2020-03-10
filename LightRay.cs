@@ -9,7 +9,7 @@ namespace Optics
         public Ray(Vector2 origin, Vector2 direction)
         {
             Origin = origin;
-            Direction =Vector2.Normalize(direction);            
+            Direction =direction!=Vector2.Zero?Vector2.Normalize(direction):direction;            
         }
 
         public Vector2 Origin { get; private set; }
