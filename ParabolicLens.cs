@@ -10,8 +10,12 @@ namespace Optics
         private ILine leftSurface;
         private ILine rightSurface;
 
-        private float focalLength;
-        private float width;
+        public float focalLength { get; private set; }
+        public float width { get; private set; }
+
+        public float LeftPoint (float y) => leftSurface.Point(y).X;
+        public float RightPoint(float y) => rightSurface.Point(y).X;
+
         /// <summary>
         /// 
         /// </summary>
@@ -26,6 +30,7 @@ namespace Optics
             rightSurface = new HorizontalParabola(center + Vector2.UnitX * d, -p, -height, height) as ILine;
             focalLength = p;
             width = d;
+            Height= height;
         }
 
         private (RayHit<Ray> hit, Ray refraction, Ray Reflection) HandleSide(Ray ray, ILine side, bool isInner)
@@ -57,7 +62,7 @@ namespace Optics
             return (hit, ray, ray);
         }
 
-        public override Ray HandleRay(Ray ray)
+        public override Ray HandleRay(Ray ray,List<RayHit<Ray>> hits, List<Ray> secondaryRays)
         {
             ILine side, otherSide;
             bool isInner = (ray.Origin.Y * ray.Origin.Y <= 2 * focalLength * (ray.Origin.X + width)) &&
@@ -74,10 +79,35 @@ namespace Optics
                 otherSide = leftSurface;
             }
             var (hit, innerRefraction, mainReflection) = HandleSide(ray, side, isInner);
-
+            hits.Add(hit);
+            secondaryRays.Add(mainReflection);
             if (hit)
             {
-                var (hit2, mainRefraction, innerReflection) = HandleSide(innerRefraction, otherSide,true);
+                var (hit2, mainRefraction, innerReflection) = HandleSide(innerRefraction, otherSide,true);                
+                hits.Add(hit2);
+
+                // Processing inner reflections
+                void Swap<T>(ref T lhs, ref T rhs)
+                {
+                    T temp;
+                    temp = lhs;
+                    lhs = rhs;
+                    rhs = temp;
+                }
+                Ray newRay = innerReflection;
+                for (int i = 0; i < 3; i++)
+                {
+                    var (newHit, secondaryRefraction, secondaryReflection) = HandleSide(newRay, side, true);
+                    if (newHit)
+                    {
+                        hits.Add(newHit);
+                        secondaryRays.Add(secondaryRefraction);
+
+                    }
+                    newRay = secondaryReflection;
+                    Swap(ref side, ref otherSide);
+                }
+
                 return mainRefraction;
             }
             return innerRefraction;

@@ -13,20 +13,19 @@ namespace Optics
         /// Left half of lens, right one is semetric about the center
         /// </summary>
 
-        protected Vector2 Center;
+        public Vector2 Center { get; protected set; }
 
         /// <summary>
         /// Height above main axis
         /// </summary>
-        protected float height = 5f;
+        public float Height { get; protected set; }
 
         protected Lens(Func<float, float> refractiveIndex, Vector2 center, float height)
         {
             this.refractiveIndex = (x) => 1.33f;//refractiveIndex;
             Center = center;
-            this.height = height;
+            this.Height = height;
         }
-
-        public abstract Ray HandleRay(Ray ray);
+        public abstract Ray HandleRay(Ray ray,List<RayHit<Ray>> hits,List<Ray> secondaryRays);
     }
 }
