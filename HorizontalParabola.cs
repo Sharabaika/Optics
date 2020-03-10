@@ -86,15 +86,38 @@ namespace Optics
             float d2 = Vector2.Dot(v2, localRay.Direction);
 
 
-            if (Math.Abs(d1) < Math.Abs(d2) && d1 > 0)
+            if (d1 > 0 && d2>0)
             {
-                if (yFrom <= y1 && y1 <= yTo)
+                if (Math.Abs(d1) < Math.Abs(d2))
+                {
                     return new RayHit<Tray>(ray, p1);
+                }
+                else
+                {
+                    return new RayHit<Tray>(ray, p2);
+                }
             }
-            else if (yFrom <= y2 && y2 <= yTo)
+            else
             {
-                return new RayHit<Tray>(ray,p2);
+                if (d1>0)
+                {
+                    return new RayHit<Tray>(ray, p1);
+                }
+                else if(d2>0)
+                {
+                    return new RayHit<Tray>(ray, p2);
+                }
             }
+
+            //if (Math.Abs(d1) < Math.Abs(d2) && d1 > 0)
+            //{
+            //    if (yFrom <= y1 && y1 <= yTo)
+            //        return new RayHit<Tray>(ray, p1);
+            //}
+            //else if (yFrom <= y2 && y2 <= yTo)
+            //{
+            //    return new RayHit<Tray>(ray,p2);
+            //}
             return new RayHit<Tray>(ray);
         }
 
