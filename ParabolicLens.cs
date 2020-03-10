@@ -49,7 +49,7 @@ namespace Optics
                 var incidenceAngle = (float)(Math.Atan2(-normal.Y,-normal.X) - Math.Atan2(ray.Direction.Y, ray.Direction.X));
                 var refractionAngle = (float)Math.Asin(Math.Sin(incidenceAngle) / n);
 
-                var refraction = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(refractionAngle)));
+                var refraction = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(-refractionAngle)));
                 var reflection = new Ray(hit.Point, Vector2.Reflect(ray.Direction, normal));
                 return (hit, refraction, reflection);
             }
