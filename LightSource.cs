@@ -35,5 +35,10 @@ namespace Optics
             }
             return rays;
         }
+
+        public List<Ray> castOneRay(Vector2 dir)
+        {
+            return new List<Ray>() { new Ray(Position, dir) };
+        }
     }
 }

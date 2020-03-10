@@ -54,8 +54,15 @@ namespace Optics
                 var incidenceAngle = (float)(Math.Atan2(-normal.Y,-normal.X) - Math.Atan2(ray.Direction.Y, ray.Direction.X));
                 var refractionAngle = (float)Math.Asin(Math.Sin(incidenceAngle) / n);
 
-                var refraction = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(-refractionAngle)));
                 var reflection = new Ray(hit.Point, Vector2.Reflect(ray.Direction, normal));
+
+                if (float.IsNaN(refractionAngle))
+                {
+                    // Full reflection
+                    throw new FullReflectionException<Ray>(reflection);
+                }
+
+                var refraction = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(-refractionAngle)));
                 return (hit, refraction, reflection);
             }
 
@@ -66,7 +73,7 @@ namespace Optics
         {
             ILine side, otherSide;
             bool isInner = (ray.Origin.Y * ray.Origin.Y <= 2 * focalLength * (ray.Origin.X + width)) &&
-                (ray.Origin.Y * ray.Origin.Y <= 2 * focalLength * (ray.Origin.X - width));
+                (ray.Origin.Y * ray.Origin.Y <= -2 * focalLength * (ray.Origin.X - width));
 
             if ((ray.Direction.X > 0f && !isInner) || (ray.Direction.X < 0 && isInner))
             {
@@ -120,6 +127,41 @@ namespace Optics
                 return mainRefraction;
             }
             return innerRefraction;
+        }
+
+        public void HandleRayV2(Ray ray, List<RayHit<Ray>> hits, List<Ray> secondaryRays)
+        {
+            Stack<Ray> raysToHandle = new Stack<Ray>();
+            ILine side = toLeft(ray.Origin) ? leftSurface : rightSurface;
+
+        }
+
+
+        public bool isOnLeftBorder(Vector2 p)
+        {
+            return (p.Y * p.Y == 2 * focalLength * (p.X + width));
+        }
+        public bool isOnRightBorder(Vector2 p)
+        {
+            return (p.Y * p.Y == -2 * focalLength * (p.X - width));
+        }
+        public bool toLeft(Vector2 p)
+        {
+            return (p.X < Center.X);
+        }
+        public bool toRight(Vector2 p)
+        {
+            return p.X > Center.X;
+        }
+
+        public class FullReflectionException<Tray> : System.Exception where Tray: Ray
+        {
+            Tray reflection;
+
+            public FullReflectionException(RayHit<Tray> hit)
+            {
+                this.reflection = reflection;
+            }
         }
     }
 }
