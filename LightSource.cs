@@ -30,7 +30,7 @@ namespace Optics
 
             for (int i = 1; i < N+1; i++)
             {
-                var v = Vector2.Lerp(a, b, (float)i / (N + 1f));
+                var v = Vector2.Lerp(a-Position, b-Position, (float)i / (N + 1f));
                 rays.Add(new Ray(Position,v));
             }
             return rays;
