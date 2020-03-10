@@ -102,7 +102,16 @@ namespace Optics
                     {
                         hits.Add(newHit);
                         secondaryRays.Add(secondaryRefraction);
-
+                    }
+                    else
+                    {
+                        Swap(ref side, ref otherSide);
+                        (newHit, secondaryRefraction, secondaryReflection) = HandleSide(newRay, side, true);
+                        if (newHit)
+                        {
+                            hits.Add(newHit);
+                            secondaryRays.Add(secondaryRefraction);
+                        }
                     }
                     newRay = secondaryReflection;
                     Swap(ref side, ref otherSide);
