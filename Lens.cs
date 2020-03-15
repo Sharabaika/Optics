@@ -26,6 +26,6 @@ namespace Optics
             Center = center;
             this.Height = height;
         }
-        public abstract Ray HandleRay(Ray ray,List<RayHit<Ray>> hits,List<Ray> secondaryRays);
+        public abstract void HandleRay(LightRay ray,List<RayHit<LightRay>> hits,List<LightRay> secondaryRays);
     }
 }

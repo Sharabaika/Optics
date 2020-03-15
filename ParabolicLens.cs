@@ -13,7 +13,7 @@ namespace Optics
         public float focalLength { get; private set; }
         public float width { get; private set; }
 
-        public float LeftPoint (float y) => leftSurface.Point(y).X;
+        public float LeftPoint(float y) => leftSurface.Point(y).X;
         public float RightPoint(float y) => rightSurface.Point(y).X;
 
         /// <summary>
@@ -30,12 +30,13 @@ namespace Optics
             rightSurface = new HorizontalParabola(center + Vector2.UnitX * d, -p, -height, height) as ILine;
             focalLength = p;
             width = d;
-            Height= height;
+            Height = height;
         }
 
-        private (RayHit<Ray> hit, Ray refraction, Ray Reflection,bool fullReflection) HandleSide(Ray ray, ILine side, bool isInner)
+        private (RayHit<LightRay> hit, LightRay refraction, LightRay Reflection, bool fullReflection)
+            HandleSide(LightRay ray, ILine side, bool isInner, bool ignoreFirst= false)
         {
-            var hit = side.Intersection(ray);
+            var hit = side.Intersection(ray,ignoreFirst);
             if (hit)
             {
                 Vector2 normal;
@@ -51,134 +52,91 @@ namespace Optics
                     normal = side.Normal(hit.Y);
                 }
 
-                var incidenceAngle = (float)(Math.Atan2(-normal.Y,-normal.X) - Math.Atan2(ray.Direction.Y, ray.Direction.X));
+                var incidenceAngle = (float)(Math.Atan2(-normal.Y, -normal.X) - Math.Atan2(ray.Direction.Y, ray.Direction.X));
                 var refractionAngle = (float)Math.Asin(Math.Sin(incidenceAngle) / n);
-
-                var reflection = new Ray(hit.Point, Vector2.Reflect(ray.Direction, normal));
+                float reflCoeficent = (float)(Math.Sin(Math.Abs(incidenceAngle) - Math.Abs(refractionAngle)) /
+                                      (Math.Sin(Math.Abs(incidenceAngle) + Math.Abs(refractionAngle))));
 
                 bool isFullReflection = false;
                 if (float.IsNaN(refractionAngle))
                 {
                     isFullReflection = true;
+                    reflCoeficent = 1;
                 }
 
-                var refraction = new Ray(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(-refractionAngle)));
+
+
+
+                var refDirection = Vector2.Reflect(ray.Direction, normal);
+                var reflection = new LightRay(hit.Point, refDirection, ray.Intensity * reflCoeficent * reflCoeficent);
+
+
+
+                var refraction = new LightRay(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(-refractionAngle)), ray.Intensity - reflection.Intensity);
                 return (hit, refraction, reflection, isFullReflection);
             }
 
-            return (hit, ray, ray,false);
+            return (hit, ray, ray, false);
         }
 
-        // Dont use
-        public override Ray HandleRay(Ray ray,List<RayHit<Ray>> hits, List<Ray> secondaryRays)
+        public override void HandleRay(LightRay rayToHandle, List<RayHit<LightRay>> hits, List<LightRay> secondaryRays)
         {
-            ILine side, otherSide;
-            bool isInner = (ray.Origin.Y * ray.Origin.Y <= 2 * focalLength * (ray.Origin.X + width)) &&
-                (ray.Origin.Y * ray.Origin.Y <= -2 * focalLength * (ray.Origin.X - width));
-
-            if ((ray.Direction.X > 0f && !isInner) || (ray.Direction.X < 0 && isInner))
-            {
-                side = leftSurface;
-                otherSide = rightSurface;
-            }
-            else
-            {
-                side = rightSurface;
-                otherSide = leftSurface;
-            }
-            var (hit, innerRefraction, mainReflection,fullRef) = HandleSide(ray, side, isInner);
-            hits.Add(hit);
-            secondaryRays.Add(mainReflection);
-            if (hit)
-            {
-                var (hit2, mainRefraction, innerReflection,fullRef1) = HandleSide(innerRefraction, otherSide,true);                
-                hits.Add(hit2);
-
-                // Processing inner reflections
-                void Swap<T>(ref T lhs, ref T rhs)
-                {
-                    T temp;
-                    temp = lhs;
-                    lhs = rhs;
-                    rhs = temp;
-                }
-                Ray newRay = innerReflection;
-                for (int i = 0; i < 3; i++)
-                {
-                    var (newHit, secondaryRefraction, secondaryReflection,fullRef2) = HandleSide(newRay, side, true);
-                    if (newHit)
-                    {
-                        hits.Add(newHit);
-                        secondaryRays.Add(secondaryRefraction);
-                    }
-                    else
-                    {
-                        Swap(ref side, ref otherSide);
-                        (newHit, secondaryRefraction, secondaryReflection,fullRef2) = HandleSide(newRay, side, true);
-                        if (newHit)
-                        {
-                            hits.Add(newHit);
-                            secondaryRays.Add(secondaryRefraction);
-                        }
-                    }
-                    newRay = secondaryReflection;
-                    Swap(ref side, ref otherSide);
-                }
-
-                return mainRefraction;
-            }
-            return innerRefraction;
-        }
-
-        public void HandleRayV2(Ray rayToHandle, List<RayHit<Ray>> hits, List<Ray> secondaryRays)
-        {
-
-
-            Stack<Ray> raysToHandle = new Stack<Ray>();
+            Stack<LightRay> raysToHandle = new Stack<LightRay>();
             ILine side = toLeft(rayToHandle.Origin) ? leftSurface : rightSurface;
             ILine otherSide = toRight(rayToHandle.Origin) ? leftSurface : rightSurface;
 
-            var (hit, innerRefraction, mainReflection, fullRef) = HandleSide(rayToHandle, side, true);
+            var (hit, innerRefraction, mainReflection, fullRef) = HandleSide(rayToHandle, side, false);
             if (hit)
             {
+                if(!float.IsNaN(mainReflection.Intensity))
+                    secondaryRays.Add(mainReflection);
+                hits.Add(hit);
+
                 if (fullRef)
                 {
-                    hits.Add(hit);
-                    secondaryRays.Add(mainReflection);
                     return;
                 }
                 raysToHandle.Push(innerRefraction);
 
+                int reflectionDepth = 0;
+                bool reflectsOnSameSide = false;
+                bool previousHit = false;
                 // all are inside
-                for (int i = 0; i < 3; i++)
-                {                      
-                    var ray = raysToHandle.Pop();
-                    var (newHit, newRefraction, newReflection, fullref) = HandleSide(ray, otherSide,true);
-                    var (newHit2, newRefraction2, newReflection2, fullref2) = HandleSide(ray, otherSide, true);
+                while(raysToHandle.Count>0 && reflectionDepth<128)
+                {
 
-                    if(newHit && newHit2)
-                    {
-                        // TODO
-                    }
+                    var ray = raysToHandle.Pop();
+                    var (newHit, newRefraction, newReflection, fullref) = HandleSide(ray, otherSide, true, reflectsOnSameSide);
+
+                    reflectsOnSameSide = false;
 
                     if (newHit)
                     {
-                        raysToHandle.Push(newReflection);
-                        hits.Add(hit);
+                        previousHit = true;
+                        reflectionDepth++;
+
+                        if (newReflection.Intensity >= 0.001f)
+                            raysToHandle.Push(newReflection);
+                        hits.Add(newHit);
 
                         if (fullref)
                         {
                         }
                         else
                         {
-                            secondaryRays.Add(newRefraction);
+                            if(newRefraction.Intensity>= 0.001f)
+                                secondaryRays.Add(newRefraction);
                         }
                     }
                     else
                     {
-                        flipSides();
+                        if (previousHit == false)
+                            throw new Exception();
                         raysToHandle.Push(ray);
+                        reflectsOnSameSide = true;
+                        previousHit = false;
                     }
+                    flipSides();
                 }
 
 

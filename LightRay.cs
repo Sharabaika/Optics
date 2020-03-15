@@ -29,6 +29,11 @@ namespace Optics
             Intensity = intensity;
         }
 
+        public new LightRay ParalellTransfer(Vector2 v)
+        {
+            return new LightRay(Origin + v, Direction,Intensity);
+        } 
+
         public float Intensity { get; private set; }
 
     }
@@ -93,6 +98,26 @@ namespace Optics
         {
             return !hit.isHit;
         }
+
+        public static RayHit<Tray> operator &(RayHit<Tray> left, RayHit<Tray> right)
+        {
+            bool res = false;
+            if (left)
+                if (right)
+                    res = true;
+            return new RayHit<Tray>(left.ray, left.hitPoint,res);
+        }
+
+        public static RayHit<Tray> operator |(RayHit<Tray> left, RayHit<Tray> right)
+        {
+            bool res = false;
+            if (left)
+                res = true;
+            if (right)
+                res = true;
+            return new RayHit<Tray>(left.ray, left.hitPoint, res);
+        }
+
 
         public class NoHitException : System.Exception
         {

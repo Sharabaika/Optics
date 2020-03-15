@@ -24,21 +24,21 @@ namespace Optics
         /// <param name="b"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        public List<Ray> CastRays(Vector2 a,Vector2 b, int N)
+        public List<LightRay> CastRays(Vector2 a,Vector2 b, int N)
         {
-            var rays = new List<Ray>();
+            var rays = new List<LightRay>();
 
             for (int i = 1; i < N+1; i++)
             {
                 var v = Vector2.Lerp(a-Position, b-Position, (float)i / (N + 1f));
-                rays.Add(new Ray(Position,v));
+                rays.Add(new LightRay(Position,v,1));
             }
             return rays;
         }
 
-        public List<Ray> castOneRay(Vector2 dir)
+        public List<LightRay> castOneRay(Vector2 dir)
         {
-            return new List<Ray>() { new Ray(Position, dir) };
+            return new List<LightRay>() { new LightRay(Position, dir,1) };
         }
     }
 }

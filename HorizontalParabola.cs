@@ -33,7 +33,7 @@ namespace Optics
         /// </summary>
         /// <typeparam name="Tray">Tray must be derive from Ray class</typeparam>
         /// <param name="ray"></param>
-        public RayHit<Tray> Intersection<Tray>(Tray ray) where Tray: Ray
+        public RayHit<Tray> Intersection<Tray>(Tray ray, bool ignoreFirst) where Tray: Ray
         {
             var localRay = ray.ParalellTransfer(-origin);
             var _a = 2 * p;
@@ -79,8 +79,8 @@ namespace Optics
             var p1 = Point(y1);
             var p2 = Point(y2);
 
-            var v1 = p1 - localRay.Origin;
-            var v2 = p2 - localRay.Origin;
+            var v1 = p1 - ray.Origin;
+            var v2 = p2 - ray.Origin;
 
             float d1 = Vector2.Dot(v1, localRay.Direction);
             float d2 = Vector2.Dot(v2, localRay.Direction);
@@ -88,36 +88,27 @@ namespace Optics
 
             if (d1 > 0 && d2>0)
             {
-                if (Math.Abs(d1) < Math.Abs(d2))
+                if (  (Math.Abs(d1) < Math.Abs(d2) ^ ignoreFirst) && (yFrom<=y1 && y1<=yTo) )
                 {
                     return new RayHit<Tray>(ray, p1);
                 }
-                else
+                else if(yFrom <= y2 && y2 <= yTo)
                 {
                     return new RayHit<Tray>(ray, p2);
                 }
             }
             else
             {
-                if (d1>0)
+                if (d1>0 && (yFrom <= y1 && y1 <= yTo))
                 {
                     return new RayHit<Tray>(ray, p1);
                 }
-                else if(d2>0)
+                else if(d2>0 && (yFrom <= y2 && y2 <= yTo))
                 {
                     return new RayHit<Tray>(ray, p2);
                 }
             }
 
-            //if (Math.Abs(d1) < Math.Abs(d2) && d1 > 0)
-            //{
-            //    if (yFrom <= y1 && y1 <= yTo)
-            //        return new RayHit<Tray>(ray, p1);
-            //}
-            //else if (yFrom <= y2 && y2 <= yTo)
-            //{
-            //    return new RayHit<Tray>(ray,p2);
-            //}
             return new RayHit<Tray>(ray);
         }
 

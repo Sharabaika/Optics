@@ -14,7 +14,7 @@ namespace Optics
         /// </summary>
         /// <typeparam name="Tray">Tray must be derive from Ray class</typeparam>
         /// <param name="ray"></param>
-        RayHit<Tray> Intersection<Tray>(Tray ray) where Tray: Ray;
+        RayHit<Tray> Intersection<Tray>(Tray ray, bool ignoreFirst) where Tray: Ray;
 
         Vector2 Normal(float t);
     }
