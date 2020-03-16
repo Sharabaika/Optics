@@ -33,6 +33,14 @@ namespace Optics
             Height = height;
         }
 
+        public override bool IsIntersects<Tray>(Tray ray)
+        {
+            var p1 = leftSurface.Intersection(ray, false);
+            var p2 = rightSurface.Intersection(ray, false);
+            return (p1 || p2) ? true : false;
+            //return p1 || p2; //??
+        }
+
         private (RayHit<LightRay> hit, LightRay refraction, LightRay Reflection, bool fullReflection)
             HandleSide(LightRay ray, ILine side, bool isInner, bool ignoreFirst= false)
         {

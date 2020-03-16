@@ -27,6 +27,7 @@ namespace Optics
             this.Height = height;
         }
 
+        public abstract bool IsIntersects<Tray>(Tray ray) where Tray : Ray;
         public static (LightRay reflection, LightRay refraction, bool isFullRefraction) ReflectAndRefract(LightRay ray, Vector2 normal,Vector2 point, float n1, float n2)
         {
             var incidenceAngle = (float)(Math.Atan2(normal.Y, normal.X) - Math.Atan2(-ray.Direction.Y, -ray.Direction.X));
