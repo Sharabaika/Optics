@@ -26,6 +26,8 @@ namespace Optics
             Center = center;
             this.Height = height;
         }
+
+        //public static (Tray reflection, Tray refraction, bool isFullRefraction) ReflectAndRefract<Tray>(Tray ray, Vector2 normal, float n1, float n2);
         public abstract void HandleRay(LightRay ray,List<RayHit<LightRay>> hits,List<LightRay> secondaryRays);
     }
 }
