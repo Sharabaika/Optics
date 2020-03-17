@@ -7,11 +7,7 @@ namespace Optics
 {
     public abstract class Lens
     {
-        protected Func<float, float> refractiveIndex= (x)=>1f;
-
-        /// <summary>
-        /// Left half of lens, right one is semetric about the center
-        /// </summary>
+        protected Func<float, float> refractiveIndex;
 
         public Vector2 Center { get; protected set; }
 
@@ -22,7 +18,7 @@ namespace Optics
 
         protected Lens(Func<float, float> refractiveIndex, Vector2 center, float height)
         {
-            this.refractiveIndex = (x) => 1.33f;//refractiveIndex;
+            this.refractiveIndex = refractiveIndex;
             Center = center;
             this.Height = height;
         }

@@ -38,7 +38,7 @@ namespace Optics
             var localRay = ray.ParalellTransfer(-origin);
             var _a = 2 * p;
 
-            if (localRay.Direction.Y == 0)                
+            if (localRay.Direction.Y == 0 || Math.Abs(localRay.Direction.Y)<=0.001f)                
                 return new RayHit<Tray>(ray,Point(localRay.Origin.Y),
                     yFrom<=localRay.Origin.Y && localRay.Origin.Y<=yTo &&
                     localRay.Origin.X * localRay.Direction.X<0
