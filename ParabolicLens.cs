@@ -60,26 +60,6 @@ namespace Optics
                     normal = side.Normal(hit.Y);
                 }
 
-                //var incidenceAngle = (float)(Math.Atan2(normal.Y , normal.X)-Math.Atan2(-ray.Direction.Y, -ray.Direction.X));
-                //while(Math.Abs(incidenceAngle) > Math.PI / 2f)
-                //    incidenceAngle =  incidenceAngle - 2f*(float)Math.PI * Math.Sign(incidenceAngle);
-                //var refractionAngle = (float)Math.Asin(Math.Sin(incidenceAngle) / n);
-
-                //float reflCoeficent = (float)(Math.Sin(Math.Abs(incidenceAngle) - Math.Abs(refractionAngle)) /
-                //                      (Math.Sin(Math.Abs(incidenceAngle) + Math.Abs(refractionAngle))));
-
-                //bool isFullReflection = false;
-                //if (float.IsNaN(refractionAngle))
-                //{
-                //    isFullReflection = true;
-                //    reflCoeficent = 1;
-                //}
-
-                //var refDirection = Vector2.Reflect(ray.Direction, normal);
-                //var reflection = new LightRay(hit.Point, refDirection, ray.Intensity * reflCoeficent * reflCoeficent);
-
-                //var refraction = new LightRay(hit.Point, Vector2.Transform(-normal, Matrix3x2.CreateRotation(-refractionAngle)), ray.Intensity - reflection.Intensity);
-
                 var (reflection, refraction, isFullReflection) = ReflectAndRefract(ray, normal, hit.Point, 1, n);
 
                 return (hit, refraction, reflection, isFullReflection);
